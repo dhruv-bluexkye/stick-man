@@ -271,9 +271,22 @@ Array.prototype.last = function () {
   
   // Submit score to Flutter backend
   function submitScoreToFlutter() {
+    // Prevent multiple submissions - check if already submitting or completed
+    if (scoreSubmitting) {
+      console.log('Score submission already in progress. Skipping duplicate submission.');
+      return;
+    }
+    
+    if (scoreSubmissionComplete) {
+      console.log('Score already submitted. Skipping duplicate submission.');
+      return;
+    }
+    
     // Check if required parameters are available
     if (!poolId || !sessionId || !authToken) {
       console.log('Flutter parameters not available. Score not submitted.');
+      // Mark as complete even without submission to prevent retries
+      scoreSubmissionComplete = true;
       // Show back button if no session
       showBackButton();
       updateGameOverMessage('GAME OVER');
@@ -508,27 +521,30 @@ Array.prototype.last = function () {
     if (isTimerRunning) {
       isTimerRunning = false;
       
-      // Reset score submission state
-      scoreSubmitting = false;
-      scoreSubmissionComplete = false;
-      
-      // Hide back button initially
-      hideBackButton();
-      
-      // Update game over message
-      if (poolId && sessionId && authToken) {
-        updateGameOverMessage('Submitting score...');
-      } else {
-        updateGameOverMessage('GAME OVER');
-        // If no session, show back button immediately
-        showBackButton();
+      // Only process game over if not already submitted
+      if (!scoreSubmissionComplete && !scoreSubmitting) {
+        // Reset score submission state (only if not already processing)
+        scoreSubmitting = false;
+        scoreSubmissionComplete = false;
+        
+        // Hide back button initially
+        hideBackButton();
+        
+        // Update game over message
+        if (poolId && sessionId && authToken) {
+          updateGameOverMessage('Submitting score...');
+        } else {
+          updateGameOverMessage('GAME OVER');
+          // If no session, show back button immediately
+          showBackButton();
+        }
+        
+        finalScoreElement.innerText = score;
+        gameOverScreen.classList.add("visible");
+        
+        // Submit score to Flutter backend (only once)
+        submitScoreToFlutter();
       }
-      
-      finalScoreElement.innerText = score;
-      gameOverScreen.classList.add("visible");
-      
-      // Submit score to Flutter backend
-      submitScoreToFlutter();
     }
   }
   
@@ -837,27 +853,30 @@ Array.prototype.last = function () {
           // Stop timer and show game over screen
           isTimerRunning = false;
           
-          // Reset score submission state
-          scoreSubmitting = false;
-          scoreSubmissionComplete = false;
-          
-          // Hide back button initially
-          hideBackButton();
-          
-          // Update game over message
-          if (poolId && sessionId && authToken) {
-            updateGameOverMessage('Submitting score...');
-          } else {
-            updateGameOverMessage('GAME OVER');
-            // If no session, show back button immediately
-            showBackButton();
+          // Only process game over if not already submitted
+          if (!scoreSubmissionComplete && !scoreSubmitting) {
+            // Reset score submission state (only if not already processing)
+            scoreSubmitting = false;
+            scoreSubmissionComplete = false;
+            
+            // Hide back button initially
+            hideBackButton();
+            
+            // Update game over message
+            if (poolId && sessionId && authToken) {
+              updateGameOverMessage('Submitting score...');
+            } else {
+              updateGameOverMessage('GAME OVER');
+              // If no session, show back button immediately
+              showBackButton();
+            }
+            
+            finalScoreElement.innerText = score;
+            gameOverScreen.classList.add("visible");
+            
+            // Submit score to Flutter backend (only once)
+            submitScoreToFlutter();
           }
-          
-          finalScoreElement.innerText = score;
-          gameOverScreen.classList.add("visible");
-          
-          // Submit score to Flutter backend
-          submitScoreToFlutter();
           
           return;
         }
